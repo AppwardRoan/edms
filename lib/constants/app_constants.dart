@@ -34,7 +34,7 @@ class AppConstants {
     UserModel(
       id: '3',
       firstName: 'Mike',
-      lastName: 'Davis',
+      lastName: 'David',
       middleName: null,
       suffix: Suffix.jr,
       email: 'user@test.com',
