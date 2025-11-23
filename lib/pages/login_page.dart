@@ -42,13 +42,17 @@ class _LoginPageState extends ConsumerState<LoginPage> {
       _passwordController.text,
     ); // Waits for login to complete. Returns true if login is successful, false if failed.
 
-    setState(() => _isLoading = false); // Hides the loading spinner after login attempt is done.
  
     if (!mounted) return; // check if widget is still mounted
+    
+    setState(() => _isLoading = false); // Hides the loading spinner after login attempt is done.
 
     if (success) {
       context.go('/home');
     } else {
+      // ✅ CHECK AGAIN before another setState!
+      if (!mounted) return;
+    
       setState(() {
         _errorMessage = 'Invalid username/email or password. Please try again.';
       });
