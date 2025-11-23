@@ -3,27 +3,38 @@ import '../constants/app_constants.dart';
 
 class AuthRepository {
   // Simulate network delay
-  Future<void> _delay() async {
+  Future<void> _delay() async { // fake network delay so login/register feels realistic.
     await Future.delayed(const Duration(milliseconds: 800));
   }
 
-  // Login with username/email and password
-  Future<UserModel?> login(String usernameOrEmail, String password) async {
+  Future<UserModel?> login(String usernameOrEmail, String password) async { // Login with username/email and password
     await _delay();
     
     try {
-      final user = AppConstants.mockUsers.firstWhere(
-        (user) => (user.username == usernameOrEmail || user.email == usernameOrEmail) 
-            && user.password == password,
+      // First, check if user exists by username or email
+      final userExists = AppConstants.mockUsers.firstWhere(
+        (user) => user.username == usernameOrEmail || user.email == usernameOrEmail,
+        orElse: () => throw Exception('User not found'),
       );
-      return user;
+      
+      // If user exists, check password
+      if (userExists.password != password) {
+        print('❌ Password incorrect for user: $usernameOrEmail');
+        return null;
+      }
+      
+      // If both username/email and password match, return the user
+      print('✅ Login successful for user: $usernameOrEmail');
+      return userExists;
+      
     } catch (e) {
+      // Account not found
+      print('❌ Account not found: $usernameOrEmail');
       return null;
     }
   }
 
-  // Register new user
-  Future<UserModel?> register({
+  Future<UserModel?> register({ // Register new user
     required String firstName,
     required String lastName,
     String? middleName,
@@ -43,8 +54,7 @@ class AuthRepository {
       return null;
     }
     
-    // Create new user (in real app, this would save to database)
-    final newUser = UserModel(
+    final newUser = UserModel( // Create new user (in real app, this would save to database)
       id: DateTime.now().millisecondsSinceEpoch.toString(),
       firstName: firstName,
       lastName: lastName,
@@ -60,8 +70,7 @@ class AuthRepository {
     return newUser;
   }
 
-  // Logout
-  Future<void> logout() async {
+  Future<void> logout() async { // Logout
     await _delay();
     // Clear session, tokens, etc.
   }

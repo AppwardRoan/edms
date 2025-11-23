@@ -17,19 +17,34 @@ final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     initialLocation: '/login',
     redirect: (context, state) {
-      final isLoggedIn = authState.value != null;
-      final isLoginRoute = state.matchedLocation == '/login' || state.matchedLocation == '/register';
-      
+      final isLoggedIn = authState.value != null; // Check if user is logged in
+      final isLoginRoute = state.matchedLocation == '/login' || state.matchedLocation == '/register'; // Login/Register routes
+
+      /*
+      Scenario Table for User:
+
+      | User’s status  | Page he tries to visit | isLoggedIn | isLoginRoute | What happens?                                      |
+      |----------------|------------------------|------------|--------------|--------------------------------------------        |
+      | Not logged in  | /login or /register    | false      | true         | Allowed (User can see login/register)              |
+      | Not logged in  | /home, /folders, etc.  | false      | false        | Redirect to /login (cannot access protected pages) |
+      | Logged in      | /login or /register    | true       | true         | Redirect to /home (cannot access login/register)   |
+      | Logged in      | /home, /folders, etc.  | true       | false        | Allowed (can access protected pages)               |
+      */
+
       // If not logged in and trying to access protected route
-      if (!isLoggedIn && !isLoginRoute) {
-        return '/login';
+      if (!isLoggedIn && !isLoginRoute) { // false, false
+        return '/login'; // Scenario: Not logged in & protected page → redirect to login
       }
       
       // If logged in and trying to access login/register
-      if (isLoggedIn && isLoginRoute) {
-        return '/home';
+      if (isLoggedIn && isLoginRoute) { // true, true
+        return '/home'; // Scenario: Logged in & tries to access login/register → redirect to home
+
       }
-      
+      // Otherwise, no redirect
+      // Scenario: 
+      // 1. Not logged in & on /login or /register → stays 
+      // 2. Logged in & on a protected page → stays
       return null;
     },
     routes: [

@@ -3,9 +3,8 @@ import 'package:flutter_riverpod/legacy.dart';
 import '../models/user_model.dart';
 import '../repositories/auth_repository.dart';
 
-// Auth Repository Provider
-final authRepositoryProvider = Provider<AuthRepository>((ref) {
-  return AuthRepository();
+final authRepositoryProvider = Provider<AuthRepository>((ref) { // This is User's toolbox: has login, register, logout functions
+  return AuthRepository(); // creates an instance (a real usable copy) of AuthRepository
 });
 
 // Auth State Notifier
@@ -14,19 +13,18 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
 
   AuthNotifier(this._repository) : super(const AsyncValue.data(null));
 
-  // Login
-  Future<bool> login(String usernameOrEmail, String password) async {
+  Future<bool> login(String usernameOrEmail, String password) async { // Login
     state = const AsyncValue.loading();
     
     try {
-      final user = await _repository.login(usernameOrEmail, password);
+      final user = await _repository.login(usernameOrEmail, password); // attempt login - auth repository handles the logic
       
       if (user != null) {
-        state = AsyncValue.data(user);
-        return true;
+        state = AsyncValue.data(user); // updates state with logged-in user
+        return true; // signals success to LoginPage
       } else {
-        state = const AsyncValue.data(null);
-        return false;
+        state = AsyncValue.data(null); // clears state
+        return false; // signals failure
       }
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
@@ -34,8 +32,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
     }
   }
 
-  // Register
-  Future<bool> register({
+  Future<bool> register({ // Register
     required String firstName,
     required String lastName,
     String? middleName,
@@ -48,7 +45,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
     state = const AsyncValue.loading();
     
     try {
-      final user = await _repository.register(
+      final user = await _repository.register( // attempt register - auth repository handles the logic
         firstName: firstName,
         lastName: lastName,
         middleName: middleName,
@@ -85,7 +82,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<UserModel?>> {
 }
 
 // Auth Provider
-final authProvider = StateNotifierProvider<AuthNotifier, AsyncValue<UserModel?>>((ref) {
-  final repository = ref.watch(authRepositoryProvider);
-  return AuthNotifier(repository);
+final authProvider = StateNotifierProvider<AuthNotifier, AsyncValue<UserModel?>>((ref) { // // This is User's personal assistant: keeps track of whether he’s logged in
+  final repository = ref.watch(authRepositoryProvider); //uses User's toolbox
+  return AuthNotifier(repository); // creates an instance of AuthNotifier
 });

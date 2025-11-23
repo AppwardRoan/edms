@@ -20,7 +20,7 @@ class Sidebar extends ConsumerWidget {
 
     return AnimatedContainer(
       duration: const Duration(milliseconds: 300),
-      width: isExpanded ? 250 : 70,
+      width: isExpanded ? 250 : 90,
       decoration: BoxDecoration(
         color: AppTheme.surfaceWhite,
         boxShadow: [
@@ -36,7 +36,7 @@ class Sidebar extends ConsumerWidget {
           // Logo & Toggle
           Container(
             height: 70,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             decoration: const BoxDecoration(
               border: Border(
                 bottom: BorderSide(color: AppTheme.borderColor, width: 1),
@@ -45,12 +45,14 @@ class Sidebar extends ConsumerWidget {
             child: Row(
               children: [
                 if (isExpanded) ...[
-                  const Text(
-                    AppConstants.appName,
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: AppTheme.primaryBlue,
+                  Expanded(
+                    child: const Text(
+                      AppConstants.appName,
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: AppTheme.primaryBlue,
+                      ),
                     ),
                   ),
                   const Spacer(),

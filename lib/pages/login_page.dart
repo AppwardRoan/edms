@@ -20,6 +20,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
   bool _isLoading = false;
+  String? _errorMessage;
 
   @override
   void dispose() {
@@ -29,28 +30,28 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> _handleLogin() async {
-    if (!_formKey.currentState!.validate()) return;
+    if (!_formKey.currentState!.validate()) return; // check if form fields are valid
 
-    setState(() => _isLoading = true);
+    setState(() { // show loading
+      _isLoading = true;
+      _errorMessage = null;
+    });
 
-    final success = await ref.read(authProvider.notifier).login(
-      _usernameOrEmailController.text.trim(),
+    final success = await ref.read(authProvider.notifier).login( // attempt login
+      _usernameOrEmailController.text.trim(), 
       _passwordController.text,
-    );
+    ); // Waits for login to complete. Returns true if login is successful, false if failed.
 
-    setState(() => _isLoading = false);
-
-    if (!mounted) return;
+    setState(() => _isLoading = false); // Hides the loading spinner after login attempt is done.
+ 
+    if (!mounted) return; // check if widget is still mounted
 
     if (success) {
       context.go('/home');
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid email or password'),
-          backgroundColor: AppTheme.errorRed,
-        ),
-      );
+      setState(() {
+        _errorMessage = 'Invalid username/email or password. Please try again.';
+      });
     }
   }
 
@@ -116,6 +117,35 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   ),
                   const SizedBox(height: 20),
 
+                  // Error Message
+                  if (_errorMessage != null) ...[
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: AppTheme.errorRed.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: AppTheme.errorRed.withOpacity(0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.error_outline,
+                            color: AppTheme.errorRed,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Text(
+                              _errorMessage!,
+                              style: const TextStyle(color: AppTheme.errorRed,fontSize: 14),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                  ],
+
                   // Password Field
                   CustomTextField(
                     label: 'Password',
@@ -143,7 +173,28 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       return null;
                     },
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 12),
+
+                  // Forgot Password Link
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () {
+                        // TODO: Implement forgot password
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Forgot password feature coming soon!'),
+                            backgroundColor: AppTheme.primaryBlue,
+                          ),
+                        );
+                      },
+                      child: const Text(
+                        'Forgot Password?',
+                        style: TextStyle(color: AppTheme.primaryBlue,fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
 
                   // Login Button
                   CustomButton(
@@ -165,10 +216,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                         onPressed: () => context.go('/register'),
                         child: const Text(
                           'Sign Up',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.primaryBlue,
-                          ),
+                          style: TextStyle(fontWeight: FontWeight.w600,color: AppTheme.primaryBlue),
                         ),
                       ),
                     ],
@@ -187,10 +235,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                       children: [
                         const Text(
                           '🔑 Test Credentials',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w600,
-                            color: AppTheme.textPrimary,
-                          ),
+                          style: TextStyle(fontWeight: FontWeight.w600,color: AppTheme.textPrimary),
                         ),
                         const SizedBox(height: 8),
                         _buildTestCredential('Admin', 'admin / admin@test.com', 'admin123'),
