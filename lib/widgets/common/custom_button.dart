@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../theme/app_theme.dart';
 
 class CustomButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed; // Made nullable
   final bool isLoading;
   final bool isOutlined;
   final IconData? icon;

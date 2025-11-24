@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+import 'package:edms/pages/bin_page.dart';
+import 'package:edms/pages/document_details_page.dart';
 import 'package:go_router/go_router.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/auth_provider.dart';
@@ -70,9 +71,24 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/documents',
             builder: (context, state) => const DocumentsPage(),
           ),
+
+
+          GoRoute(
+            path: '/documents/:id',
+            builder: (context, state) {
+              final id = state.pathParameters['id']!;
+              return DocumentDetailsPage(documentId: id);
+            },
+          ),
+          
           GoRoute(
             path: '/folders',
             builder: (context, state) => const FoldersPage(),
+          ),
+          
+          GoRoute(
+            path: '/bin',
+            builder: (context, state) => const BinPage(),
           ),
           GoRoute(
             path: '/users',
