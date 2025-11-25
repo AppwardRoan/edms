@@ -50,9 +50,7 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
                   const SizedBox(height: 4),
                   Text(
                     'Manage all your documents',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: AppTheme.textSecondary,
-                        ),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.textSecondary),
                   ),
                 ],
               ),
@@ -246,8 +244,7 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
           document: doc,
           isSelected: isSelected,
           onTap: () => _toggleSelection(doc.id),
-          onLongPress: () => _toggleSelection(doc.id),
-          onDoubleTap: () => context.go('/documents/${doc.id}'),
+          onPreview: () => context.push('/documents/${doc.id}'),
           onDelete: () => _deleteDocument(doc.id),
         );
       },
@@ -329,7 +326,7 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
                 document: doc,
                 isSelected: isSelected,
                 onSelect: (selected) => _toggleSelection(doc.id),
-                onTap: () => context.go('/documents/${doc.id}'),
+                onPreview: () => context.push('/documents/${doc.id}'),
                 onDelete: () => _deleteDocument(doc.id),
               );
             },
@@ -417,9 +414,7 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Move to Bin'),
-        content: Text(
-          'Are you sure you want to move ${_selectedDocuments.length} document(s) to bin?',
-        ),
+        content: Text('Are you sure you want to move ${_selectedDocuments.length} document(s) to bin?'),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -427,9 +422,7 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.errorRed,
-            ),
+            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.errorRed),
             child: const Text('Move to Bin'),
           ),
         ],
@@ -462,16 +455,14 @@ class _DocumentGridCard extends StatelessWidget {
   final DocumentModel document;
   final bool isSelected;
   final VoidCallback onTap;
-  final VoidCallback onLongPress;
-  final VoidCallback onDoubleTap;
+  final VoidCallback onPreview;
   final VoidCallback onDelete;
 
   const _DocumentGridCard({
     required this.document,
     required this.isSelected,
     required this.onTap,
-    required this.onLongPress,
-    required this.onDoubleTap,
+    required this.onPreview,
     required this.onDelete,
   });
 
@@ -488,8 +479,6 @@ class _DocumentGridCard extends StatelessWidget {
       ),
       child: InkWell(
         onTap: onTap,
-        onLongPress: onLongPress,
-        onDoubleTap: onDoubleTap,
         borderRadius: BorderRadius.circular(12),
         child: Stack(
           children: [
@@ -572,25 +561,48 @@ class _DocumentGridCard extends StatelessWidget {
             Positioned(
               top: 8,
               left: 8,
-              child: PopupMenuButton(
-                icon: const Icon(Icons.more_vert, size: 20),
-                itemBuilder: (context) => [
-                  const PopupMenuItem(
-                    value: 'delete',
-                    child: Row(
-                      children: [
-                        Icon(Icons.delete_outline, size: 18, color: AppTheme.errorRed),
-                        SizedBox(width: 8),
-                        Text('Move to Bin'),
-                      ],
+              child: Row(
+                children: [
+                  // Preview Button
+                  Container(
+                    decoration: BoxDecoration(
+                      color: AppTheme.primaryBlue,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: IconButton(
+                      icon: const Icon(Icons.visibility, size: 18, color: Colors.white),
+                      onPressed: onPreview,
+                      tooltip: 'Preview',
+                      padding: EdgeInsets.zero,
+                      constraints: const BoxConstraints(
+                        minWidth: 32,
+                        minHeight: 32,
+                      ),
                     ),
                   ),
+                  const SizedBox(width: 4),
+                  // More Options Menu
+                  PopupMenuButton(
+                    icon: const Icon(Icons.more_vert, size: 20),
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_outline, size: 18, color: AppTheme.errorRed),
+                            SizedBox(width: 8),
+                            Text('Move to Bin'),
+                          ],
+                        ),
+                      ),
+                    ],
+                    onSelected: (value) {
+                      if (value == 'delete') {
+                        onDelete();
+                      }
+                    },
+                  ),
                 ],
-                onSelected: (value) {
-                  if (value == 'delete') {
-                    onDelete();
-                  }
-                },
               ),
             ),
           ],
@@ -604,21 +616,21 @@ class _DocumentListRow extends StatelessWidget {
   final DocumentModel document;
   final bool isSelected;
   final Function(bool) onSelect;
-  final VoidCallback onTap;
+  final VoidCallback onPreview;
   final VoidCallback onDelete;
 
   const _DocumentListRow({
     required this.document,
     required this.isSelected,
     required this.onSelect,
-    required this.onTap,
+    required this.onPreview,
     required this.onDelete,
   });
 
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: onTap,
+      onTap: () => onSelect(!isSelected),
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         child: Row(
@@ -652,10 +664,7 @@ class _DocumentListRow extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             document.description!,
-                            style: const TextStyle(
-                              fontSize: 12,
-                              color: AppTheme.textSecondary,
-                            ),
+                            style: const TextStyle(fontSize: 12,color: AppTheme.textSecondary),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
@@ -701,6 +710,12 @@ class _DocumentListRow extends StatelessWidget {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
+                  IconButton(
+                    icon: const Icon(Icons.visibility, size: 20),
+                    onPressed: onPreview,
+                    tooltip: 'Preview',
+                    color: AppTheme.primaryBlue,
+                  ),
                   IconButton(
                     icon: const Icon(Icons.delete_outline, size: 20),
                     onPressed: onDelete,
