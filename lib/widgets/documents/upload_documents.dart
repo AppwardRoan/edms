@@ -7,7 +7,6 @@ import '../../widgets/common/custom_text_field.dart';
 import '../../providers/document_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/file_utils.dart';
-import '../../models/document_model.dart';
 
 class UploadDocumentDialog extends ConsumerStatefulWidget {
   final String? folderId;
