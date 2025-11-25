@@ -1,3 +1,6 @@
+import 'dart:convert';
+import 'dart:html' as html;
+import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -29,22 +32,30 @@ class DocumentDetailsPage extends ConsumerWidget {
 
         return _buildDetailsPage(context, ref, document);
       },
-      loading:
-          () => Scaffold(
-            appBar: AppBar(title: const Text('Loading...')),
-            body: const Center(child: CircularProgressIndicator()),
-          ),
-      error:
-          (error, stack) => Scaffold(
-            appBar: AppBar(title: const Text('Error')),
-            body: Center(child: Text('Error: $error')),
-          ),
+      loading: () => Scaffold(
+        appBar: AppBar(
+          title: const Text('Loading...'),
+        ),
+        body: const Center(
+          child: CircularProgressIndicator(),
+        ),
+      ),
+      error: (error, stack) => Scaffold(
+        appBar: AppBar(
+          title: const Text('Error'),
+        ),
+        body: Center(
+          child: Text('Error: $error'),
+        ),
+      ),
     );
   }
 
   Widget _buildNotFound(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Document Not Found')),
+      appBar: AppBar(
+        title: const Text('Document Not Found'),
+      ),
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -57,7 +68,10 @@ class DocumentDetailsPage extends ConsumerWidget {
             const SizedBox(height: 16),
             const Text(
               'Document not found',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w600,
+              ),
             ),
             const SizedBox(height: 24),
             ElevatedButton(
@@ -70,11 +84,7 @@ class DocumentDetailsPage extends ConsumerWidget {
     );
   }
 
-  Widget _buildDetailsPage(
-    BuildContext context,
-    WidgetRef ref,
-    DocumentModel document,
-  ) {
+  Widget _buildDetailsPage(BuildContext context, WidgetRef ref, DocumentModel document) {
     final uploader = AppConstants.mockUsers.firstWhere(
       (user) => user.id == document.uploadedBy,
       orElse: () => AppConstants.mockUsers.first,
@@ -84,78 +94,48 @@ class DocumentDetailsPage extends ConsumerWidget {
       backgroundColor: AppTheme.backgroundLight,
       appBar: AppBar(
         title: Text(document.name),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(), 
-        ),
         actions: [
           // Action Buttons
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert),
-              tooltip: 'More actions',
-              offset: const Offset(0, 45),
-              itemBuilder:
-                  (context) => [
-                    const PopupMenuItem(
-                      value: 'favorite',
-                      child: Row(
-                        children: [
-                          Icon(Icons.star_outline,size: 20,color: AppTheme.warningOrange),
-                          SizedBox(width: 12),
-                          Text('Add to Favorites'),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'download',
-                      child: Row(
-                        children: [
-                          Icon(Icons.download_outlined,size: 20,color: AppTheme.primaryBlue),
-                          SizedBox(width: 12),
-                          Text('Download'),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'share',
-                      child: Row(
-                        children: [
-                          Icon(Icons.share_outlined,size: 20,color: AppTheme.primaryBlue),
-                          SizedBox(width: 12),
-                          Text('Share'),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuDivider(),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete_outline,size: 20,color: AppTheme.errorRed),
-                          SizedBox(width: 12),
-                          Text('Move to Bin'),
-                        ],
-                      ),
-                    ),
-                  ],
-              onSelected: (value) {
-                switch (value) {
-                  case 'favorite':
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Added to favorites')));
-                    break;
-                  case 'download':
-                    _downloadDocument(context, document);
-                    break;
-                  case 'share':
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Share feature coming soon')));
-                    break;
-                  case 'delete':
-                    _showDeleteDialog(context, ref, document);
-                    break;
-                }
-              },
+            child: Row(
+              children: [
+                _ActionButton(
+                  label: 'Add to Favorites',
+                  icon: Icons.star_outline,
+                  color: AppTheme.warningOrange,
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Added to favorites')),
+                    );
+                  },
+                ),
+                const SizedBox(width: 8),
+                _ActionButton(
+                  label: 'Download',
+                  icon: Icons.download_outlined,
+                  color: AppTheme.primaryBlue,
+                  onPressed: () => _downloadDocument(context, document),
+                ),
+                const SizedBox(width: 8),
+                _ActionButton(
+                  label: 'Delete',
+                  icon: Icons.delete_outline,
+                  color: AppTheme.errorRed,
+                  onPressed: () => _showDeleteDialog(context, ref, document),
+                ),
+                const SizedBox(width: 8),
+                _ActionButton(
+                  label: 'Share',
+                  icon: Icons.share_outlined,
+                  color: AppTheme.primaryBlue,
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Share feature coming soon')),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
         ],
@@ -188,7 +168,7 @@ class DocumentDetailsPage extends ConsumerWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12,vertical: 6),
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                         decoration: BoxDecoration(
                           color: FileUtils.getFileColor(document.type).withOpacity(0.1),
                           borderRadius: BorderRadius.circular(6),
@@ -205,7 +185,10 @@ class DocumentDetailsPage extends ConsumerWidget {
                       const SizedBox(width: 16),
                       Text(
                         document.size,
-                        style: const TextStyle(fontSize: 14,color: AppTheme.textSecondary),
+                        style: const TextStyle(
+                          fontSize: 14,
+                          color: AppTheme.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -235,7 +218,10 @@ class DocumentDetailsPage extends ConsumerWidget {
                   // Collaborators Section
                   const Text(
                     'Collaborators',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 16),
                   _buildCollaborator(
@@ -260,12 +246,18 @@ class DocumentDetailsPage extends ConsumerWidget {
                   // Document Details
                   const Text(
                     'Details',
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(height: 16),
 
                   // Owner
-                  _buildDetailRow('Owner', uploader.fullName),
+                  _buildDetailRow(
+                    'Owner',
+                    uploader.fullName,
+                  ),
                   const SizedBox(height: 16),
 
                   // Description
@@ -285,7 +277,7 @@ class DocumentDetailsPage extends ConsumerWidget {
                   // Modified By
                   _buildDetailRow(
                     'Modified By',
-                    document.modifiedAt != null
+                    document.modifiedAt != null 
                         ? '${uploader.fullName} on ${DateFormat('MM/dd/yyyy').format(document.modifiedAt!)}'
                         : 'Not modified',
                   ),
@@ -305,31 +297,36 @@ class DocumentDetailsPage extends ConsumerWidget {
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
-                      children:
-                          document.tags.map((tag) {
-                            return Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: AppTheme.primaryBlue.withOpacity(0.1),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Text(
-                                tag,
-                                style: const TextStyle(fontSize: 12,color: AppTheme.primaryBlue),
-                              ),
-                            );
-                          }).toList(),
+                      children: document.tags.map((tag) {
+                        return Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppTheme.primaryBlue.withOpacity(0.1),
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            tag,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.primaryBlue,
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ),
                     const SizedBox(height: 16),
                   ],
 
                   // File Info
-                  _buildDetailRow('File Name', document.fileName),
+                  _buildDetailRow(
+                    'File Name',
+                    document.fileName,
+                  ),
                   const SizedBox(height: 16),
-                  _buildDetailRow('File Size', document.size),
+                  _buildDetailRow(
+                    'File Size',
+                    document.size,
+                  ),
                   const SizedBox(height: 16),
                   _buildDetailRow(
                     'File Type',
@@ -345,6 +342,61 @@ class DocumentDetailsPage extends ConsumerWidget {
   }
 
   Widget _buildDocumentPreview(DocumentModel document) {
+    // Check if we have file bytes
+    if (document.fileBytes == null) {
+      return Container(
+        width: 600,
+        height: 700,
+        decoration: BoxDecoration(
+          color: AppTheme.surfaceWhite,
+          borderRadius: BorderRadius.circular(12),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 20,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              FileUtils.getFileIcon(document.type),
+              size: 120,
+              color: FileUtils.getFileColor(document.type),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              document.fileName,
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Preview not available',
+              style: TextStyle(
+                fontSize: 14,
+                color: AppTheme.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'This is a mock document with no actual file',
+              style: TextStyle(
+                fontSize: 12,
+                color: AppTheme.textSecondary,
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // Show preview based on file type
     return Container(
       width: 600,
       height: 700,
@@ -359,33 +411,128 @@ class DocumentDetailsPage extends ConsumerWidget {
           ),
         ],
       ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(12),
+        child: _buildPreviewContent(document),
+      ),
+    );
+  }
+
+  Widget _buildPreviewContent(DocumentModel document) {
+    // Image preview
+    if (_isImageType(document.type)) {
+      return Image.memory(
+        document.fileBytes!,
+        fit: BoxFit.contain,
+        errorBuilder: (context, error, stackTrace) {
+          return _buildPreviewError('Failed to load image');
+        },
+      );
+    }
+
+    // PDF preview (embedded iframe)
+    if (document.type == DocumentType.pdf) {
+      final viewId = 'pdf-viewer-${document.id}';
+      final base64 = base64Encode(document.fileBytes!);
+      final dataUrl = 'data:application/pdf;base64,$base64';
+      
+      // Register view factory
+      // ignore: undefined_prefixed_name
+      ui.platformViewRegistry.registerViewFactory(
+        viewId,
+        (int id) {
+          return html.IFrameElement()
+            ..src = dataUrl
+            ..style.border = 'none'
+            ..style.width = '100%'
+            ..style.height = '100%';
+        },
+      );
+      
+      return HtmlElementView(viewType: viewId);
+    }
+
+    // Text file preview
+    if (document.type == DocumentType.txt) {
+      final content = utf8.decode(document.fileBytes!);
+      return SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
+        child: Text(
+          content,
+          style: const TextStyle(
+            fontFamily: 'monospace',
+            fontSize: 14,
+          ),
+        ),
+      );
+    }
+
+    // Other file types - show icon
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          FileUtils.getFileIcon(document.type),
+          size: 120,
+          color: FileUtils.getFileColor(document.type),
+        ),
+        const SizedBox(height: 24),
+        Text(
+          document.fileName,
+          style: const TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.w600,
+          ),
+          textAlign: TextAlign.center,
+        ),
+        const SizedBox(height: 16),
+        const Text(
+          'Preview not available for this file type',
+          style: TextStyle(
+            fontSize: 14,
+            color: AppTheme.textSecondary,
+          ),
+        ),
+        const SizedBox(height: 8),
+        const Text(
+          'Click download to view the file',
+          style: TextStyle(
+            fontSize: 12,
+            color: AppTheme.textSecondary,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPreviewError(String message) {
+    return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            FileUtils.getFileIcon(document.type),
-            size: 120,
-            color: FileUtils.getFileColor(document.type),
-          ),
-          const SizedBox(height: 24),
-          Text(
-            document.fileName,
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            textAlign: TextAlign.center,
+          const Icon(
+            Icons.error_outline,
+            size: 64,
+            color: AppTheme.errorRed,
           ),
           const SizedBox(height: 16),
           Text(
-            'Preview not available',
-            style: TextStyle(fontSize: 14, color: AppTheme.textSecondary),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Click download to view the file',
-            style: TextStyle(fontSize: 12, color: AppTheme.textSecondary),
+            message,
+            style: const TextStyle(
+              fontSize: 14,
+              color: AppTheme.textSecondary,
+            ),
           ),
         ],
       ),
     );
+  }
+
+  bool _isImageType(DocumentType type) {
+    return type == DocumentType.jpg ||
+        type == DocumentType.jpeg ||
+        type == DocumentType.png ||
+        type == DocumentType.gif;
   }
 
   Widget _buildCollaborator({
@@ -400,7 +547,10 @@ class DocumentDetailsPage extends ConsumerWidget {
           radius: 20,
           child: Text(
             avatarText,
-            style: const TextStyle(color: Colors.white,fontWeight: FontWeight.w600),
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.w600,
+            ),
           ),
         ),
         const SizedBox(width: 12),
@@ -410,11 +560,17 @@ class DocumentDetailsPage extends ConsumerWidget {
             children: [
               Text(
                 name,
-                style: const TextStyle(fontSize: 14,fontWeight: FontWeight.w600),
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
               Text(
                 role,
-                style: const TextStyle(fontSize: 12,color: AppTheme.textSecondary),
+                style: const TextStyle(
+                  fontSize: 12,
+                  color: AppTheme.textSecondary,
+                ),
               ),
             ],
           ),
@@ -438,86 +594,149 @@ class DocumentDetailsPage extends ConsumerWidget {
         const SizedBox(height: 4),
         Text(
           value,
-          style: const TextStyle(fontSize: 14, color: AppTheme.textSecondary),
+          style: const TextStyle(
+            fontSize: 14,
+            color: AppTheme.textSecondary,
+          ),
         ),
       ],
     );
   }
 
   void _downloadDocument(BuildContext context, DocumentModel document) {
-    // Mock download - In production, this would trigger actual file download
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
-          children: [
-            const Icon(Icons.download, color: Colors.white, size: 20),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Text(
-                    'Download Started',
-                    style: TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  Text(
-                    document.fileName,
-                    style: const TextStyle(fontSize: 12),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-          ],
+    // Check if we have file bytes
+    if (document.fileBytes == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Cannot download: This is a mock document with no actual file'),
+          backgroundColor: AppTheme.errorRed,
         ),
-        backgroundColor: AppTheme.successGreen,
-        duration: const Duration(seconds: 3),
-      ),
-    );
-  }
+      );
+      return;
+    }
 
-  Future<void> _showDeleteDialog(
-    BuildContext context,
-    WidgetRef ref,
-    DocumentModel document,
-  ) async {
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            title: const Text('Move to Bin'),
-            content: Text('Are you sure you want to move "${document.name}" to bin?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.pop(context, true),
-                style: ElevatedButton.styleFrom(backgroundColor: AppTheme.errorRed),
-                child: const Text('Move to Bin'),
+    try {
+      // Create blob from bytes
+      final blob = html.Blob([document.fileBytes!]);
+      final url = html.Url.createObjectUrlFromBlob(blob);
+      
+      // Create anchor element and trigger download
+      final anchor = html.AnchorElement(href: url)
+        ..setAttribute('download', document.fileName)
+        ..click();
+      
+      // Clean up
+      html.Url.revokeObjectUrl(url);
+
+      // Show success message
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(Icons.download, color: Colors.white, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const Text(
+                      'Download Started',
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    Text(
+                      document.fileName,
+                      style: const TextStyle(fontSize: 12),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
-    );
-
-    if (confirmed != true) return;
-
-    final success = await ref.read(documentsProvider.notifier).moveTobin(document.id);
-
-    if (!context.mounted) return;
-
-    if (success) {
-      // Refresh bin documents list
-      ref.read(binDocumentsProvider.notifier).loadBinDocuments();
-
-      context.go('/documents');
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Document moved to bin')));
-    } else {
+          backgroundColor: AppTheme.successGreen,
+          duration: const Duration(seconds: 3),
+        ),
+      );
+    } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Failed to move document to bin'),backgroundColor: AppTheme.errorRed),
+        SnackBar(
+          content: Text('Download failed: $e'),
+          backgroundColor: AppTheme.errorRed,
+        ),
       );
     }
+  }
+
+  void _showDeleteDialog(BuildContext context, WidgetRef ref, DocumentModel document) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Move to Bin'),
+        content: Text('Are you sure you want to move "${document.name}" to bin?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final success = await ref.read(documentsProvider.notifier).moveTobin(document.id);
+              if (context.mounted) {
+                if (success) {
+                  // Refresh bin documents list
+                  ref.read(binDocumentsProvider.notifier).loadBinDocuments();
+                  
+                  context.go('/documents');
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Document moved to bin')),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content: Text('Failed to move document'),
+                      backgroundColor: AppTheme.errorRed,
+                    ),
+                  );
+                }
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.errorRed,
+            ),
+            child: const Text('Move to Bin'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ActionButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onPressed;
+
+  const _ActionButton({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
+    );
   }
 }

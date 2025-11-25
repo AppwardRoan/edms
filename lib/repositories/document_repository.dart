@@ -1,10 +1,11 @@
+import 'dart:typed_data';
 import '../models/document_model.dart';
 import '../constants/app_constants.dart';
 
 class DocumentRepository {
   // In-memory storage (simulating database)
-  final List<DocumentModel> _documents = List.from(AppConstants.mockDocuments); // Active documents
-  final List<DocumentModel> _binDocuments = List.from(AppConstants.mockBinDocuments); // Deleted documents
+  final List<DocumentModel> _documents = List.from(AppConstants.mockDocuments);
+  final List<DocumentModel> _binDocuments = List.from(AppConstants.mockBinDocuments);
 
   // Simulate network delay
   Future<void> _delay() async {
@@ -12,7 +13,7 @@ class DocumentRepository {
   }
 
   // Get all active documents
-  Future<List<DocumentModel>> getDocuments({String? folderId}) async { // Optionally filter by folderId
+  Future<List<DocumentModel>> getDocuments({String? folderId}) async {
     await _delay();
     
     if (folderId != null) {
@@ -27,7 +28,7 @@ class DocumentRepository {
   // Get documents in bin
   Future<List<DocumentModel>> getBinDocuments() async {
     await _delay();
-    return _binDocuments.where((doc) => doc.isDeleted).toList(); // Only deleted documents
+    return _binDocuments.where((doc) => doc.isDeleted).toList();
   }
 
   // Get document by ID
@@ -45,7 +46,7 @@ class DocumentRepository {
     }
   }
 
-  // Upload locally document (mock) 
+  // Upload document (mock)
   Future<DocumentModel> uploadDocument({
     required String name,
     required String fileName,
@@ -56,6 +57,7 @@ class DocumentRepository {
     required String uploadedBy,
     String? description,
     List<String> tags = const [],
+    Uint8List? fileBytes, // Accept actual file bytes
   }) async {
     await _delay();
     
@@ -71,6 +73,7 @@ class DocumentRepository {
       uploadedAt: DateTime.now(),
       description: description,
       tags: tags,
+      fileBytes: fileBytes, // Store file bytes
     );
     
     _documents.add(newDoc);
@@ -83,16 +86,16 @@ class DocumentRepository {
     
     try {
       final docIndex = _documents.indexWhere((doc) => doc.id == documentId);
-      if (docIndex == -1) return false; // Document not found
+      if (docIndex == -1) return false;
       
-      final doc = _documents[docIndex]; // Get the document
-      final deletedDoc = doc.copyWith( // Mark as deleted
+      final doc = _documents[docIndex];
+      final deletedDoc = doc.copyWith(
         status: DocumentStatus.deleted,
         deletedAt: DateTime.now(),
       );
       
-      _documents.removeAt(docIndex); // Remove from active documents
-      _binDocuments.add(deletedDoc); // Add to bin documents
+      _documents.removeAt(docIndex);
+      _binDocuments.add(deletedDoc);
       
       return true;
     } catch (e) {
@@ -105,30 +108,30 @@ class DocumentRepository {
     await _delay();
     
     try {
-      final docIndex = _binDocuments.indexWhere((doc) => doc.id == documentId); // Find in bin
-      if (docIndex == -1) return false; // Document not found
+      final docIndex = _binDocuments.indexWhere((doc) => doc.id == documentId);
+      if (docIndex == -1) return false;
       
-      final doc = _binDocuments[docIndex]; // Get the document
-      final restoredDoc = doc.copyWith( // Mark as active
+      final doc = _binDocuments[docIndex];
+      final restoredDoc = doc.copyWith(
         status: DocumentStatus.active,
         deletedAt: null,
       );
       
-      _binDocuments.removeAt(docIndex); // Remove from bin
-      _documents.add(restoredDoc); // Add back to active documents
+      _binDocuments.removeAt(docIndex);
+      _documents.add(restoredDoc);
       
-      return true; // Successfully restored
+      return true;
     } catch (e) {
       return false;
     }
   }
 
   // Permanently delete document
-  Future<bool> permanentlyDelete(String documentId) async { // from bin
+  Future<bool> permanentlyDelete(String documentId) async {
     await _delay();
     
     try {
-      _binDocuments.removeWhere((doc) => doc.id == documentId); // Remove from bin
+      _binDocuments.removeWhere((doc) => doc.id == documentId);
       return true;
     } catch (e) {
       return false;
@@ -136,11 +139,11 @@ class DocumentRepository {
   }
 
   // Empty bin (delete all documents in bin)
-  Future<bool> emptyBin() async { // permanently delete all
+  Future<bool> emptyBin() async {
     await _delay();
     
     try {
-      _binDocuments.clear(); // Clear all bin documents
+      _binDocuments.clear();
       return true;
     } catch (e) {
       return false;

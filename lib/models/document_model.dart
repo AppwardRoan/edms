@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 enum DocumentStatus {
   active,
   deleted, // In bin
@@ -97,13 +99,13 @@ class DocumentModel {
   final int sizeInBytes;
   final String? folderId; // null if in root
   final String uploadedBy; // User ID
-  // final UserModel? uploadedByUser;
   final DateTime uploadedAt;
   final DateTime? modifiedAt;
   final DocumentStatus status;
   final DateTime? deletedAt; // When moved to bin
   final String? description;
   final List<String> tags;
+  final Uint8List? fileBytes; // Actual file data for web
 
   DocumentModel({
     required this.id,
@@ -120,6 +122,7 @@ class DocumentModel {
     this.deletedAt,
     this.description,
     this.tags = const [],
+    this.fileBytes, // Store actual file bytes
   });
 
   // Check if document is in bin
@@ -151,6 +154,7 @@ class DocumentModel {
     DateTime? deletedAt,
     String? description,
     List<String>? tags,
+    Uint8List? fileBytes,
   }) {
     return DocumentModel(
       id: id ?? this.id,
@@ -167,6 +171,7 @@ class DocumentModel {
       deletedAt: deletedAt ?? this.deletedAt,
       description: description ?? this.description,
       tags: tags ?? this.tags,
+      fileBytes: fileBytes ?? this.fileBytes,
     );
   }
 }

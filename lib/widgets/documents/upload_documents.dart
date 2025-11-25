@@ -7,6 +7,7 @@ import '../../widgets/common/custom_text_field.dart';
 import '../../providers/document_provider.dart';
 import '../../providers/auth_provider.dart';
 import '../../utils/file_utils.dart';
+import '../../models/document_model.dart';
 
 class UploadDocumentDialog extends ConsumerStatefulWidget {
   final String? folderId;
@@ -92,7 +93,7 @@ class _UploadDocumentDialogState extends ConsumerState<UploadDocumentDialog> {
 
     setState(() => _isUploading = true);
 
-    final currentUser = ref.read(authProvider).value; // Get current user
+    final currentUser = ref.read(authProvider).value;
     if (currentUser == null) {
       if (!mounted) return;
       setState(() => _isUploading = false);
@@ -116,11 +117,12 @@ class _UploadDocumentDialogState extends ConsumerState<UploadDocumentDialog> {
           size: FileUtils.formatFileSize(_selectedFile!.size),
           sizeInBytes: _selectedFile!.size,
           folderId: widget.folderId,
-          uploadedBy: currentUser.id, // User ID
+          uploadedBy: currentUser.id,
           description: _descriptionController.text.trim().isEmpty
               ? null
               : _descriptionController.text.trim(),
           tags: tags,
+          fileBytes: _selectedFile!.bytes, // Pass actual file bytes!
         );
 
     if (!mounted) return;

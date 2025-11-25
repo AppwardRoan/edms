@@ -1,27 +1,28 @@
+import 'dart:typed_data';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_riverpod/legacy.dart';
 import '../models/document_model.dart';
 import '../repositories/document_repository.dart';
 
 // Document Repository Provider
-final documentRepositoryProvider = Provider<DocumentRepository>((ref) { // Repository instance
+final documentRepositoryProvider = Provider<DocumentRepository>((ref) {
   return DocumentRepository();
 });
 
 // Documents List Provider (Active Documents)
-final documentsProvider = StateNotifierProvider<DocumentsNotifier, AsyncValue<List<DocumentModel>>>((ref) { // Active documents state
+final documentsProvider = StateNotifierProvider<DocumentsNotifier, AsyncValue<List<DocumentModel>>>((ref) {
   final repository = ref.watch(documentRepositoryProvider);
   return DocumentsNotifier(repository);
 });
 
 // Bin Documents Provider (Deleted Documents)
-final binDocumentsProvider = StateNotifierProvider<BinDocumentsNotifier, AsyncValue<List<DocumentModel>>>((ref) { // Bin documents state
-  final repository = ref.watch(documentRepositoryProvider); 
+final binDocumentsProvider = StateNotifierProvider<BinDocumentsNotifier, AsyncValue<List<DocumentModel>>>((ref) {
+  final repository = ref.watch(documentRepositoryProvider);
   return BinDocumentsNotifier(repository);
 });
 
 // Documents Notifier
-class DocumentsNotifier extends StateNotifier<AsyncValue<List<DocumentModel>>> { // Manages active documents
+class DocumentsNotifier extends StateNotifier<AsyncValue<List<DocumentModel>>> {
   final DocumentRepository _repository;
 
   DocumentsNotifier(this._repository) : super(const AsyncValue.loading()) {
@@ -33,10 +34,10 @@ class DocumentsNotifier extends StateNotifier<AsyncValue<List<DocumentModel>>> {
     state = const AsyncValue.loading();
     
     try {
-      final documents = await _repository.getDocuments(folderId: folderId); // Optionally filter by folderId
-      state = AsyncValue.data(documents); // Set state to loaded documents
+      final documents = await _repository.getDocuments(folderId: folderId);
+      state = AsyncValue.data(documents);
     } catch (e, stack) {
-      state = AsyncValue.error(e, stack); // Set state to error
+      state = AsyncValue.error(e, stack);
     }
   }
 
@@ -51,6 +52,7 @@ class DocumentsNotifier extends StateNotifier<AsyncValue<List<DocumentModel>>> {
     required String uploadedBy,
     String? description,
     List<String> tags = const [],
+    Uint8List? fileBytes, // Accept file bytes
   }) async {
     try {
       final newDoc = await _repository.uploadDocument(
@@ -63,11 +65,12 @@ class DocumentsNotifier extends StateNotifier<AsyncValue<List<DocumentModel>>> {
         uploadedBy: uploadedBy,
         description: description,
         tags: tags,
+        fileBytes: fileBytes, // Pass file bytes
       );
       
       // Add to current state
-      final currentDocs = state.value ?? []; // Get current documents
-      state = AsyncValue.data([...currentDocs, newDoc]); // Add new document
+      final currentDocs = state.value ?? [];
+      state = AsyncValue.data([...currentDocs, newDoc]);
       
       return true;
     } catch (e) {
@@ -78,7 +81,7 @@ class DocumentsNotifier extends StateNotifier<AsyncValue<List<DocumentModel>>> {
   // Move document to bin
   Future<bool> moveTobin(String documentId) async {
     try {
-      final success = await _repository.moveTobin(documentId); // Move to bin
+      final success = await _repository.moveTobin(documentId);
       
       if (success) {
         // Remove from current state
@@ -113,7 +116,7 @@ class DocumentsNotifier extends StateNotifier<AsyncValue<List<DocumentModel>>> {
 }
 
 // Bin Documents Notifier
-class BinDocumentsNotifier extends StateNotifier<AsyncValue<List<DocumentModel>>> { // Manages bin documents
+class BinDocumentsNotifier extends StateNotifier<AsyncValue<List<DocumentModel>>> {
   final DocumentRepository _repository;
 
   BinDocumentsNotifier(this._repository) : super(const AsyncValue.loading()) {
@@ -125,7 +128,7 @@ class BinDocumentsNotifier extends StateNotifier<AsyncValue<List<DocumentModel>>
     state = const AsyncValue.loading();
     
     try {
-      final documents = await _repository.getBinDocuments(); // Get bin documents
+      final documents = await _repository.getBinDocuments();
       state = AsyncValue.data(documents);
     } catch (e, stack) {
       state = AsyncValue.error(e, stack);
@@ -135,14 +138,14 @@ class BinDocumentsNotifier extends StateNotifier<AsyncValue<List<DocumentModel>>
   // Restore document from bin
   Future<bool> restoreDocument(String documentId) async {
     try {
-      final success = await _repository.restoreDocument(documentId); // Restore from bin status from deleted to active
+      final success = await _repository.restoreDocument(documentId);
       
       if (success) {
         // Remove from bin state
-        final currentDocs = state.value ?? []; // Current bin documents
+        final currentDocs = state.value ?? [];
         state = AsyncValue.data(
-          currentDocs.where((doc) => doc.id != documentId).toList() // Remove restored document. Update UI
-        ); 
+          currentDocs.where((doc) => doc.id != documentId).toList(),
+        );
       }
       
       return success;
@@ -154,13 +157,13 @@ class BinDocumentsNotifier extends StateNotifier<AsyncValue<List<DocumentModel>>
   // Permanently delete document
   Future<bool> permanentlyDelete(String documentId) async {
     try {
-      final success = await _repository.permanentlyDelete(documentId); // Permanently delete from bin
+      final success = await _repository.permanentlyDelete(documentId);
       
       if (success) {
         // Remove from bin state
-        final currentDocs = state.value ?? []; // Current bin documents
+        final currentDocs = state.value ?? [];
         state = AsyncValue.data(
-          currentDocs.where((doc) => doc.id != documentId).toList(), // Remove restored document. Update UI
+          currentDocs.where((doc) => doc.id != documentId).toList(),
         );
       }
       

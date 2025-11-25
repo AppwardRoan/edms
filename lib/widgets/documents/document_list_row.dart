@@ -2,8 +2,6 @@ import 'package:edms/models/document_model.dart';
 import 'package:edms/theme/app_theme.dart';
 import 'package:edms/utils/file_utils.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
-
 class DocumentListRow extends StatelessWidget {
   final DocumentModel document;
   final bool isSelected;
