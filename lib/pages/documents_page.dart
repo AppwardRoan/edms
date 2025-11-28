@@ -1,5 +1,6 @@
 import 'package:edms/widgets/documents/document_location.dart';
 import 'package:edms/widgets/documents/upload_documents.dart';
+import 'package:edms/widgets/documents/move_copy_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -141,29 +142,48 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
           if (_selectedDocuments.isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 16),
-              child: Row(
-                children: [
-                  Text(
-                    '${_selectedDocuments.length} selected',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w600,
-                      fontSize: 14,
-                    ),
+              child: Card(
+                color: AppTheme.primaryBlue.withOpacity(0.05),
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      Icon(Icons.check_circle, color: AppTheme.primaryBlue, size: 20),
+                      const SizedBox(width: 12),
+                      Text(
+                        '${_selectedDocuments.length} selected',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(width: 24),
+                      TextButton.icon(
+                        onPressed: _moveSelected,
+                        icon: const Icon(Icons.drive_file_move, size: 18),
+                        label: const Text('Move'),
+                      ),
+                      TextButton.icon(
+                        onPressed: _copySelected,
+                        icon: const Icon(Icons.content_copy, size: 18),
+                        label: const Text('Copy'),
+                      ),
+                      TextButton.icon(
+                        onPressed: _deleteSelected,
+                        icon: const Icon(Icons.delete_outline, size: 18),
+                        label: const Text('Delete'),
+                        style: TextButton.styleFrom(
+                          foregroundColor: AppTheme.errorRed,
+                        ),
+                      ),
+                      const Spacer(),
+                      TextButton(
+                        onPressed: () => setState(() => _selectedDocuments.clear()),
+                        child: const Text('Clear Selection'),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 16),
-                  TextButton.icon(
-                    onPressed: _deleteSelected,
-                    icon: const Icon(Icons.delete_outline, size: 18),
-                    label: const Text('Delete'),
-                    style: TextButton.styleFrom(
-                      foregroundColor: AppTheme.errorRed,
-                    ),
-                  ),
-                  TextButton(
-                    onPressed: () => setState(() => _selectedDocuments.clear()),
-                    child: const Text('Clear Selection'),
-                  ),
-                ],
+                ),
               ),
             ),
 
@@ -248,6 +268,8 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
           isSelected: isSelected,
           onTap: () => _toggleSelection(doc.id),
           onPreview: () => context.go('/documents/${doc.id}'),
+          onMove: () => _moveDocument(doc.id, doc.folderId),
+          onCopy: () => _copyDocument(doc.id, doc.folderId),
           onDelete: () => _deleteDocument(doc.id),
         );
       },
@@ -318,7 +340,7 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
                     textAlign: TextAlign.right,
                   ),
                 ),
-                const SizedBox(width: 100),
+                const SizedBox(width: 120),
               ],
             ),
           ),
@@ -337,6 +359,8 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
                 isSelected: isSelected,
                 onSelect: (selected) => _toggleSelection(doc.id),
                 onPreview: () => context.go('/documents/${doc.id}'),
+                onMove: () => _moveDocument(doc.id, doc.folderId),
+                onCopy: () => _copyDocument(doc.id, doc.folderId),
                 onDelete: () => _deleteDocument(doc.id),
               );
             },
@@ -363,7 +387,66 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
     );
 
     if (result == true) {
-      // Refresh documents list
+      ref.read(documentsProvider.notifier).loadDocuments();
+    }
+  }
+
+  Future<void> _moveDocument(String docId, String? currentFolderId) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => MoveOrCopyDocumentDialog(
+        documentIds: [docId],
+        currentFolderId: currentFolderId,
+        mode: MoveOrCopy.move,
+      ),
+    );
+
+    if (result == true) {
+      ref.read(documentsProvider.notifier).loadDocuments();
+    }
+  }
+
+  Future<void> _copyDocument(String docId, String? currentFolderId) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => MoveOrCopyDocumentDialog(
+        documentIds: [docId],
+        currentFolderId: currentFolderId,
+        mode: MoveOrCopy.copy,
+      ),
+    );
+
+    if (result == true) {
+      ref.read(documentsProvider.notifier).loadDocuments();
+    }
+  }
+
+  Future<void> _moveSelected() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => MoveOrCopyDocumentDialog(
+        documentIds: _selectedDocuments.toList(),
+        mode: MoveOrCopy.move,
+      ),
+    );
+
+    if (result == true) {
+      setState(() => _selectedDocuments.clear());
+      ref.read(documentsProvider.notifier).loadDocuments();
+    }
+  }
+
+  Future<void> _copySelected() async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => MoveOrCopyDocumentDialog(
+        documentIds: _selectedDocuments.toList(),
+        mode: MoveOrCopy.copy,
+      ),
+    );
+
+    if (result == true) {
+      setState(() => _selectedDocuments.clear());
       ref.read(documentsProvider.notifier).loadDocuments();
     }
   }
@@ -407,7 +490,6 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
         ),
       );
 
-      // Refresh bin documents
       ref.read(binDocumentsProvider.notifier).loadBinDocuments();
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -470,6 +552,8 @@ class _DocumentGridCard extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
   final VoidCallback onPreview;
+  final VoidCallback onMove;
+  final VoidCallback onCopy;
   final VoidCallback onDelete;
 
   const _DocumentGridCard({
@@ -477,6 +561,8 @@ class _DocumentGridCard extends StatelessWidget {
     required this.isSelected,
     required this.onTap,
     required this.onPreview,
+    required this.onMove,
+    required this.onCopy,
     required this.onDelete,
   });
 
@@ -501,7 +587,6 @@ class _DocumentGridCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // File Icon
                   Expanded(
                     child: Container(
                       width: double.infinity,
@@ -519,7 +604,6 @@ class _DocumentGridCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  // File Name
                   Text(
                     document.fileName,
                     style: const TextStyle(
@@ -530,7 +614,6 @@ class _DocumentGridCard extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                   const SizedBox(height: 4),
-                  // File Type & Size
                   Row(
                     children: [
                       Container(
@@ -559,7 +642,6 @@ class _DocumentGridCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 6),
-                  // Location
                   DocumentLocationWidget(
                     folderId: document.folderId,
                     showIcon: true,
@@ -568,7 +650,6 @@ class _DocumentGridCard extends StatelessWidget {
                 ],
               ),
             ),
-            // Selection Checkbox
             Positioned(
               top: 8,
               right: 8,
@@ -578,13 +659,11 @@ class _DocumentGridCard extends StatelessWidget {
                 activeColor: AppTheme.primaryBlue,
               ),
             ),
-            // More Options
             Positioned(
               top: 8,
               left: 8,
               child: Row(
                 children: [
-                  // Preview Button
                   Container(
                     decoration: BoxDecoration(
                       color: AppTheme.primaryBlue,
@@ -602,10 +681,29 @@ class _DocumentGridCard extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 4),
-                  // More Options Menu
                   PopupMenuButton(
                     icon: const Icon(Icons.more_vert, size: 20),
                     itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'move',
+                        child: Row(
+                          children: [
+                            Icon(Icons.drive_file_move, size: 18),
+                            SizedBox(width: 8),
+                            Text('Move to...'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'copy',
+                        child: Row(
+                          children: [
+                            Icon(Icons.content_copy, size: 18),
+                            SizedBox(width: 8),
+                            Text('Copy to...'),
+                          ],
+                        ),
+                      ),
                       const PopupMenuItem(
                         value: 'delete',
                         child: Row(
@@ -618,7 +716,11 @@ class _DocumentGridCard extends StatelessWidget {
                       ),
                     ],
                     onSelected: (value) {
-                      if (value == 'delete') {
+                      if (value == 'move') {
+                        onMove();
+                      } else if (value == 'copy') {
+                        onCopy();
+                      } else if (value == 'delete') {
                         onDelete();
                       }
                     },
@@ -638,6 +740,8 @@ class _DocumentListRow extends StatelessWidget {
   final bool isSelected;
   final Function(bool) onSelect;
   final VoidCallback onPreview;
+  final VoidCallback onMove;
+  final VoidCallback onCopy;
   final VoidCallback onDelete;
 
   const _DocumentListRow({
@@ -645,6 +749,8 @@ class _DocumentListRow extends StatelessWidget {
     required this.isSelected,
     required this.onSelect,
     required this.onPreview,
+    required this.onMove,
+    required this.onCopy,
     required this.onDelete,
   });
 
@@ -738,7 +844,7 @@ class _DocumentListRow extends StatelessWidget {
               ),
             ),
             SizedBox(
-              width: 100,
+              width: 120,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.end,
                 children: [
@@ -748,11 +854,49 @@ class _DocumentListRow extends StatelessWidget {
                     tooltip: 'Preview',
                     color: AppTheme.primaryBlue,
                   ),
-                  IconButton(
-                    icon: const Icon(Icons.delete_outline, size: 20),
-                    onPressed: onDelete,
-                    tooltip: 'Move to Bin',
-                    color: AppTheme.errorRed,
+                  PopupMenuButton(
+                    icon: const Icon(Icons.more_vert, size: 20),
+                    itemBuilder: (context) => [
+                      const PopupMenuItem(
+                        value: 'move',
+                        child: Row(
+                          children: [
+                            Icon(Icons.drive_file_move, size: 18),
+                            SizedBox(width: 8),
+                            Text('Move to...'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'copy',
+                        child: Row(
+                          children: [
+                            Icon(Icons.content_copy, size: 18),
+                            SizedBox(width: 8),
+                            Text('Copy to...'),
+                          ],
+                        ),
+                      ),
+                      const PopupMenuItem(
+                        value: 'delete',
+                        child: Row(
+                          children: [
+                            Icon(Icons.delete_outline, size: 18, color: AppTheme.errorRed),
+                            SizedBox(width: 8),
+                            Text('Move to Bin'),
+                          ],
+                        ),
+                      ),
+                    ],
+                    onSelected: (value) {
+                      if (value == 'move') {
+                        onMove();
+                      } else if (value == 'copy') {
+                        onCopy();
+                      } else if (value == 'delete') {
+                        onDelete();
+                      }
+                    },
                   ),
                 ],
               ),

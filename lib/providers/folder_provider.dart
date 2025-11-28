@@ -27,6 +27,12 @@ final folderPathProvider = FutureProvider<List<FolderModel>>((ref) async {
   return repository.getFolderPath(currentFolderId);
 });
 
+// All Folders Provider (for move/copy dialogs - gets complete hierarchy)
+final allFoldersProvider = FutureProvider<List<FolderModel>>((ref) async {
+  final repository = ref.watch(folderRepositoryProvider);
+  return repository.getAllFolders();
+});
+
 // Bin Folders Provider
 final binFoldersProvider = StateNotifierProvider<BinFoldersNotifier, AsyncValue<List<FolderModel>>>((ref) {
   final repository = ref.watch(folderRepositoryProvider);

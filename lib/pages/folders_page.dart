@@ -1,9 +1,10 @@
 import 'package:edms/widgets/documents/upload_documents.dart';
 import 'package:edms/widgets/folder/bread_crumbs_navigation.dart';
 import 'package:edms/widgets/folder/create_folder_dialog.dart';
+import 'package:edms/widgets/folder/move_folder_dialog.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
+import 'package:go_router/go_router.dart';
 import '../theme/app_theme.dart';
 import '../providers/folder_provider.dart';
 import '../providers/document_provider.dart';
@@ -192,9 +193,7 @@ class _FoldersPageState extends ConsumerState<FoldersPage> {
       ),
       itemCount: documents.length,
       itemBuilder: (context, index) {
-        return _DocumentCard(
-          document: documents[index]
-          );
+        return _DocumentCard(document: documents[index]);
       },
     );
   }
@@ -277,6 +276,16 @@ class _FolderCard extends ConsumerWidget {
                 icon: const Icon(Icons.more_vert, size: 20),
                 itemBuilder: (context) => [
                   const PopupMenuItem(
+                    value: 'move',
+                    child: Row(
+                      children: [
+                        Icon(Icons.drive_file_move, size: 18),
+                        SizedBox(width: 8),
+                        Text('Move to...'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
                     value: 'rename',
                     child: Row(
                       children: [
@@ -298,7 +307,9 @@ class _FolderCard extends ConsumerWidget {
                   ),
                 ],
                 onSelected: (value) {
-                  if (value == 'rename') {
+                  if (value == 'move') {
+                    _showMoveFolderDialog(context, ref, folder);
+                  } else if (value == 'rename') {
                     _showRenameDialog(context, ref, folder);
                   } else if (value == 'delete') {
                     _showDeleteDialog(context, ref, folder);
@@ -310,6 +321,20 @@ class _FolderCard extends ConsumerWidget {
         ),
       ),
     );
+  }
+
+  void _showMoveFolderDialog(BuildContext context, WidgetRef ref, FolderModel folder) async {
+    final result = await showDialog<bool>(
+      context: context,
+      builder: (context) => MoveFolderDialog(
+        folderId: folder.id,
+        currentParentId: folder.parentFolderId,
+      ),
+    );
+
+    if (result == true) {
+      ref.read(foldersProvider.notifier).loadFolders();
+    }
   }
 
   void _showRenameDialog(BuildContext context, WidgetRef ref, FolderModel folder) {
@@ -399,16 +424,16 @@ class _FolderCard extends ConsumerWidget {
   }
 }
 
-class _DocumentCard extends StatelessWidget {
+class _DocumentCard extends ConsumerWidget {
   final DocumentModel document;
 
   const _DocumentCard({required this.document});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     return Card(
       child: InkWell(
-        onTap: () {},
+        onTap: () => context.go('/documents/${document.id}'),
         borderRadius: BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(12),

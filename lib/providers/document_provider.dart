@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/legacy.dart';
 import '../models/document_model.dart';
 import '../repositories/document_repository.dart';
 
-// Document Repository Provider
+// Document Repository Provider (EXPOSED for direct access in dialogs)
 final documentRepositoryProvider = Provider<DocumentRepository>((ref) {
   return DocumentRepository();
 });
@@ -52,7 +52,7 @@ class DocumentsNotifier extends StateNotifier<AsyncValue<List<DocumentModel>>> {
     required String uploadedBy,
     String? description,
     List<String> tags = const [],
-    Uint8List? fileBytes, // Accept file bytes
+    Uint8List? fileBytes,
   }) async {
     try {
       final newDoc = await _repository.uploadDocument(
@@ -65,7 +65,7 @@ class DocumentsNotifier extends StateNotifier<AsyncValue<List<DocumentModel>>> {
         uploadedBy: uploadedBy,
         description: description,
         tags: tags,
-        fileBytes: fileBytes, // Pass file bytes
+        fileBytes: fileBytes,
       );
       
       // Add to current state

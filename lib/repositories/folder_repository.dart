@@ -108,6 +108,58 @@ class FolderRepository {
     return newFolder;
   }
 
+  // Move folder to another parent
+  Future<bool> moveFolder(String folderId, String? newParentId) async {
+    await _delay();
+    
+    try {
+      final folderIndex = _folders.indexWhere((f) => f.id == folderId);
+      if (folderIndex == -1) return false;
+      
+      final folder = _folders[folderIndex];
+      
+      // Check for circular reference (can't move folder into its own children)
+      if (newParentId != null) {
+        final subfolders = await getSubfoldersRecursive(folderId);
+        if (subfolders.any((f) => f.id == newParentId)) {
+          return false; // Would create circular reference
+        }
+      }
+      
+      // Update old parent's subfolder count
+      if (folder.parentFolderId != null) {
+        final oldParentIndex = _folders.indexWhere((f) => f.id == folder.parentFolderId);
+        if (oldParentIndex != -1) {
+          final oldParent = _folders[oldParentIndex];
+          _folders[oldParentIndex] = oldParent.copyWith(
+            subfolderCount: oldParent.subfolderCount - 1,
+          );
+        }
+      }
+      
+      // Update new parent's subfolder count
+      if (newParentId != null) {
+        final newParentIndex = _folders.indexWhere((f) => f.id == newParentId);
+        if (newParentIndex != -1) {
+          final newParent = _folders[newParentIndex];
+          _folders[newParentIndex] = newParent.copyWith(
+            subfolderCount: newParent.subfolderCount + 1,
+          );
+        }
+      }
+      
+      // Update folder's parent
+      _folders[folderIndex] = folder.copyWith(
+        parentFolderId: newParentId,
+        modifiedAt: DateTime.now(),
+      );
+      
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
   // Rename folder
   Future<FolderModel?> renameFolder(String folderId, String newName) async {
     await _delay();

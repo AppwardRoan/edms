@@ -46,7 +46,7 @@ class DocumentRepository {
     }
   }
 
-  // Upload document (mock)
+  // Upload document
   Future<DocumentModel> uploadDocument({
     required String name,
     required String fileName,
@@ -57,7 +57,7 @@ class DocumentRepository {
     required String uploadedBy,
     String? description,
     List<String> tags = const [],
-    Uint8List? fileBytes, // Accept actual file bytes
+    Uint8List? fileBytes,
   }) async {
     await _delay();
     
@@ -73,11 +73,63 @@ class DocumentRepository {
       uploadedAt: DateTime.now(),
       description: description,
       tags: tags,
-      fileBytes: fileBytes, // Store file bytes
+      fileBytes: fileBytes,
     );
     
     _documents.add(newDoc);
     return newDoc;
+  }
+
+  // Move documents to folder
+  Future<bool> moveDocuments(List<String> documentIds, String? targetFolderId) async {
+    await _delay();
+    
+    try {
+      for (final docId in documentIds) {
+        final docIndex = _documents.indexWhere((doc) => doc.id == docId);
+        if (docIndex == -1) continue;
+        
+        final doc = _documents[docIndex];
+        _documents[docIndex] = doc.copyWith(
+          folderId: targetFolderId,
+          modifiedAt: DateTime.now(),
+        );
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  // Copy documents to folder
+  Future<bool> copyDocuments(List<String> documentIds, String? targetFolderId) async {
+    await _delay();
+    
+    try {
+      for (final docId in documentIds) {
+        final doc = _documents.firstWhere((d) => d.id == docId);
+        
+        final copiedDoc = DocumentModel(
+          id: '${DateTime.now().millisecondsSinceEpoch}_${docId}',
+          name: '${doc.name} (Copy)',
+          fileName: doc.fileName,
+          type: doc.type,
+          size: doc.size,
+          sizeInBytes: doc.sizeInBytes,
+          folderId: targetFolderId,
+          uploadedBy: doc.uploadedBy,
+          uploadedAt: DateTime.now(),
+          description: doc.description,
+          tags: doc.tags,
+          fileBytes: doc.fileBytes,
+        );
+        
+        _documents.add(copiedDoc);
+      }
+      return true;
+    } catch (e) {
+      return false;
+    }
   }
 
   // Move document to bin (soft delete)
