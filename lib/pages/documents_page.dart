@@ -1,3 +1,4 @@
+import 'package:edms/widgets/documents/document_location.dart';
 import 'package:edms/widgets/documents/upload_documents.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -50,7 +51,9 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
                   const SizedBox(height: 4),
                   Text(
                     'Manage all your documents',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: AppTheme.textSecondary),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                          color: AppTheme.textSecondary,
+                        ),
                   ),
                 ],
               ),
@@ -244,7 +247,7 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
           document: doc,
           isSelected: isSelected,
           onTap: () => _toggleSelection(doc.id),
-          onPreview: () => context.push('/documents/${doc.id}'),
+          onPreview: () => context.go('/documents/${doc.id}'),
           onDelete: () => _deleteDocument(doc.id),
         );
       },
@@ -289,6 +292,13 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
                   ),
                 ),
                 const Expanded(
+                  flex: 2,
+                  child: Text(
+                    'Location',
+                    style: TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const Expanded(
                   child: Text(
                     'Type',
                     style: TextStyle(fontWeight: FontWeight.w600),
@@ -326,7 +336,7 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
                 document: doc,
                 isSelected: isSelected,
                 onSelect: (selected) => _toggleSelection(doc.id),
-                onPreview: () => context.push('/documents/${doc.id}'),
+                onPreview: () => context.go('/documents/${doc.id}'),
                 onDelete: () => _deleteDocument(doc.id),
               );
             },
@@ -414,7 +424,9 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Move to Bin'),
-        content: Text('Are you sure you want to move ${_selectedDocuments.length} document(s) to bin?'),
+        content: Text(
+          'Are you sure you want to move ${_selectedDocuments.length} document(s) to bin?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -422,7 +434,9 @@ class _DocumentsPageState extends ConsumerState<DocumentsPage> {
           ),
           ElevatedButton(
             onPressed: () => Navigator.pop(context, true),
-            style: ElevatedButton.styleFrom(backgroundColor: AppTheme.errorRed),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppTheme.errorRed,
+            ),
             child: const Text('Move to Bin'),
           ),
         ],
@@ -544,6 +558,13 @@ class _DocumentGridCard extends StatelessWidget {
                       ),
                     ],
                   ),
+                  const SizedBox(height: 6),
+                  // Location
+                  DocumentLocationWidget(
+                    folderId: document.folderId,
+                    showIcon: true,
+                    fontSize: 10,
+                  ),
                 ],
               ),
             ),
@@ -664,7 +685,10 @@ class _DocumentListRow extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             document.description!,
-                            style: const TextStyle(fontSize: 12,color: AppTheme.textSecondary),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppTheme.textSecondary,
+                            ),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ],
@@ -672,6 +696,14 @@ class _DocumentListRow extends StatelessWidget {
                     ),
                   ),
                 ],
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: DocumentLocationWidget(
+                folderId: document.folderId,
+                showIcon: false,
+                fontSize: 13,
               ),
             ),
             Expanded(

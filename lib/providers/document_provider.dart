@@ -9,7 +9,7 @@ final documentRepositoryProvider = Provider<DocumentRepository>((ref) {
   return DocumentRepository();
 });
 
-// Documents List Provider (Active Documents)
+// Documents List Provider (Active Documents) - shows ALL documents
 final documentsProvider = StateNotifierProvider<DocumentsNotifier, AsyncValue<List<DocumentModel>>>((ref) {
   final repository = ref.watch(documentRepositoryProvider);
   return DocumentsNotifier(repository);
@@ -29,7 +29,7 @@ class DocumentsNotifier extends StateNotifier<AsyncValue<List<DocumentModel>>> {
     loadDocuments();
   }
 
-  // Load all active documents
+  // Load all active documents (no folder filter)
   Future<void> loadDocuments({String? folderId}) async {
     state = const AsyncValue.loading();
     

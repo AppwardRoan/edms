@@ -6,7 +6,7 @@ enum FolderStatus {
 class FolderModel {
   final String id;
   final String name;
-  final String? parentFolderId; // null if root folder
+  final String? parentFolderId; // null if root folder, otherwise parent's ID
   final String createdBy; // User ID
   final DateTime createdAt;
   final DateTime? modifiedAt;
@@ -14,6 +14,7 @@ class FolderModel {
   final DateTime? deletedAt; // When moved to bin
   final String? description;
   final int documentCount; // Number of documents in folder
+  final int subfolderCount; // Number of subfolders
 
   FolderModel({
     required this.id,
@@ -26,6 +27,7 @@ class FolderModel {
     this.deletedAt,
     this.description,
     this.documentCount = 0,
+    this.subfolderCount = 0,
   });
 
   // Check if folder is in bin
@@ -34,6 +36,9 @@ class FolderModel {
   // Check if folder is active
   bool get isActive => status == FolderStatus.active;
 
+  // Check if folder is root level
+  bool get isRoot => parentFolderId == null;
+
   // Days remaining before auto-delete (30 days in bin)
   int? get daysUntilAutoDelete {
     if (deletedAt == null) return null;
@@ -41,6 +46,9 @@ class FolderModel {
     final remaining = 30 - daysSinceDeleted;
     return remaining > 0 ? remaining : 0;
   }
+
+  // Check if folder is empty
+  bool get isEmpty => documentCount == 0 && subfolderCount == 0;
 
   FolderModel copyWith({
     String? id,
@@ -53,6 +61,7 @@ class FolderModel {
     DateTime? deletedAt,
     String? description,
     int? documentCount,
+    int? subfolderCount,
   }) {
     return FolderModel(
       id: id ?? this.id,
@@ -65,6 +74,7 @@ class FolderModel {
       deletedAt: deletedAt ?? this.deletedAt,
       description: description ?? this.description,
       documentCount: documentCount ?? this.documentCount,
+      subfolderCount: subfolderCount ?? this.subfolderCount,
     );
   }
 }

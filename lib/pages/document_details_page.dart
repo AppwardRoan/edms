@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:html' as html;
 import 'dart:ui' as ui;
+import 'package:edms/widgets/documents/document_location.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:intl/intl.dart';
@@ -75,7 +76,7 @@ class DocumentDetailsPage extends ConsumerWidget {
             ),
             const SizedBox(height: 24),
             ElevatedButton(
-              onPressed: () => context.push('/documents'),
+              onPressed: () => context.go('/documents'),
               child: const Text('Back to Documents'),
             ),
           ],
@@ -94,78 +95,48 @@ class DocumentDetailsPage extends ConsumerWidget {
       backgroundColor: AppTheme.backgroundLight,
       appBar: AppBar(
         title: Text(document.name),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => context.pop(), 
-        ),
         actions: [
           // Action Buttons
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: PopupMenuButton<String>(
-              icon: const Icon(Icons.more_vert),
-              tooltip: 'More actions',
-              offset: const Offset(0, 45),
-              itemBuilder:
-                  (context) => [
-                    const PopupMenuItem(
-                      value: 'favorite',
-                      child: Row(
-                        children: [
-                          Icon(Icons.star_outline,size: 20,color: AppTheme.warningOrange),
-                          SizedBox(width: 12),
-                          Text('Add to Favorites'),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'download',
-                      child: Row(
-                        children: [
-                          Icon(Icons.download_outlined,size: 20,color: AppTheme.primaryBlue),
-                          SizedBox(width: 12),
-                          Text('Download'),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuItem(
-                      value: 'share',
-                      child: Row(
-                        children: [
-                          Icon(Icons.share_outlined,size: 20,color: AppTheme.primaryBlue),
-                          SizedBox(width: 12),
-                          Text('Share'),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuDivider(),
-                    const PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete_outline,size: 20,color: AppTheme.errorRed),
-                          SizedBox(width: 12),
-                          Text('Move to Bin'),
-                        ],
-                      ),
-                    ),
-                  ],
-              onSelected: (value) {
-                switch (value) {
-                  case 'favorite':
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Added to favorites')));
-                    break;
-                  case 'download':
-                    _downloadDocument(context, document);
-                    break;
-                  case 'share':
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Share feature coming soon')));
-                    break;
-                  case 'delete':
-                    _showDeleteDialog(context, ref, document);
-                    break;
-                }
-              },
+            child: Row(
+              children: [
+                _ActionButton(
+                  label: 'Add to Favorites',
+                  icon: Icons.star_outline,
+                  color: AppTheme.warningOrange,
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Added to favorites')),
+                    );
+                  },
+                ),
+                const SizedBox(width: 8),
+                _ActionButton(
+                  label: 'Download',
+                  icon: Icons.download_outlined,
+                  color: AppTheme.primaryBlue,
+                  onPressed: () => _downloadDocument(context, document),
+                ),
+                const SizedBox(width: 8),
+                _ActionButton(
+                  label: 'Delete',
+                  icon: Icons.delete_outline,
+                  color: AppTheme.errorRed,
+                  onPressed: () => _showDeleteDialog(context, ref, document),
+                ),
+                const SizedBox(width: 8),
+                _ActionButton(
+                  label: 'Share',
+                  icon: Icons.share_outlined,
+                  color: AppTheme.primaryBlue,
+                  onPressed: () {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('Share feature coming soon')),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
         ],
@@ -280,6 +251,19 @@ class DocumentDetailsPage extends ConsumerWidget {
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
                     ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // Location
+                  _buildDetailRow(
+                    'Location',
+                    '', // Empty string, will use widget below
+                  ),
+                  const SizedBox(height: 4),
+                  DocumentLocationWidget(
+                    folderId: document.folderId,
+                    showIcon: true,
+                    fontSize: 14,
                   ),
                   const SizedBox(height: 16),
 
@@ -718,7 +702,7 @@ class DocumentDetailsPage extends ConsumerWidget {
                   // Refresh bin documents list
                   ref.read(binDocumentsProvider.notifier).loadBinDocuments();
                   
-                  context.push('/documents');
+                  context.go('/documents');
                   ScaffoldMessenger.of(context).showSnackBar(
                     const SnackBar(content: Text('Document moved to bin')),
                   );
@@ -743,3 +727,30 @@ class DocumentDetailsPage extends ConsumerWidget {
   }
 }
 
+class _ActionButton extends StatelessWidget {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final VoidCallback onPressed;
+
+  const _ActionButton({
+    required this.label,
+    required this.icon,
+    required this.color,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: Icon(icon, size: 18),
+      label: Text(label),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: color,
+        foregroundColor: Colors.white,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      ),
+    );
+  }
+}

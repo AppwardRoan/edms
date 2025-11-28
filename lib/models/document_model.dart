@@ -131,6 +131,9 @@ class DocumentModel {
   // Check if document is active
   bool get isActive => status == DocumentStatus.active;
 
+  // Check if document is in root (no folder)
+  bool get isInRoot => folderId == null;
+
   // Days remaining before auto-delete (30 days in bin)
   int? get daysUntilAutoDelete {
     if (deletedAt == null) return null;
